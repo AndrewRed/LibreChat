@@ -864,7 +864,7 @@ export class MCPManager {
     serverName: string;
     toolName: string;
     provider: t.Provider;
-    toolArguments?: Record<string, unknown>;
+    toolArguments?: Record<string, unknown> | string;
     options?: RequestOptions;
     tokenMethods?: TokenMethods;
     customUserVars?: Record<string, string>;
@@ -910,12 +910,48 @@ export class MCPManager {
         );
       }
 
+      let parsedArguments: unknown = toolArguments;
+      if (typeof parsedArguments === 'string') {
+        logger.debug(
+          `${logPrefix}[${toolName}] Raw tool arguments string: ${parsedArguments}`,
+        );
+        try {
+          let arg: unknown = parsedArguments;
+          // Parse repeatedly, removing wrapping quotes at each step
+          // to handle double or triple encoded JSON strings
+          // eslint-disable-next-line no-constant-condition
+          while (typeof arg === 'string') {
+            let str = arg.trim();
+            if (
+              (str.startsWith('"') && str.endsWith('"')) ||
+              (str.startsWith("'") && str.endsWith("'"))
+            ) {
+              str = str.slice(1, -1);
+            }
+            arg = JSON.parse(str);
+          }
+          parsedArguments = arg;
+          logger.debug(
+            `${logPrefix}[${toolName}] Parsed tool arguments:`,
+            parsedArguments,
+          );
+        } catch (parseError) {
+          logger.warn(
+            `${logPrefix}[${toolName}] Failed to parse tool arguments as JSON`,
+            parseError,
+          );
+          parsedArguments = toolArguments;
+        }
+      } else {
+        logger.debug(`${logPrefix}[${toolName}] Tool arguments:`, parsedArguments);
+      }
+
       const result = await connection.client.request(
         {
           method: 'tools/call',
           params: {
             name: toolName,
-            arguments: toolArguments,
+            arguments: parsedArguments,
           },
         },
         CallToolResultSchema,

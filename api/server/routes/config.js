@@ -54,7 +54,7 @@ router.get('/', async function (req, res) {
 
     /** @type {TStartupConfig} */
     const payload = {
-      appTitle: process.env.APP_TITLE || 'LibreChat',
+      appTitle: process.env.APP_TITLE || 'AlfaChat',
       socialLogins: req.app.locals.socialLogins ?? defaultSocialLogins,
       discordLoginEnabled: !!process.env.DISCORD_CLIENT_ID && !!process.env.DISCORD_CLIENT_SECRET,
       facebookLoginEnabled:
@@ -87,7 +87,7 @@ router.get('/', async function (req, res) {
         isBirthday() ||
         isEnabled(process.env.SHOW_BIRTHDAY_ICON) ||
         process.env.SHOW_BIRTHDAY_ICON === '',
-      helpAndFaqURL: process.env.HELP_AND_FAQ_URL || 'https://librechat.ai',
+      helpAndFaqURL: process.env.HELP_AND_FAQ_URL || 'https://alfachat.ai',
       interface: req.app.locals.interfaceConfig,
       turnstile: req.app.locals.turnstileConfig,
       modelSpecs: req.app.locals.modelSpecs,

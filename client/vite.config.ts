@@ -52,8 +52,8 @@ export default defineConfig(({ command }) => ({
       },
       includeAssets: [],
       manifest: {
-        name: 'LibreChat',
-        short_name: 'LibreChat',
+        name: 'AlfaChat',
+        short_name: 'AlfaChat',
         start_url: '/',
         display: 'standalone',
         background_color: '#000000',

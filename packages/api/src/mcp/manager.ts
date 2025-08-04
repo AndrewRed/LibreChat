@@ -16,6 +16,42 @@ import { formatToolContent } from './parsers';
 import { MCPConnection } from './connection';
 import { processMCPEnv } from '~/utils/env';
 
+function deepParseJSON(value: unknown): unknown {
+  if (typeof value === 'string') {
+    let result: unknown = value;
+    // Continuously attempt to parse strings that look like JSON
+    // and unwrap any surrounding quotes at each layer
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (typeof result === 'string') {
+        let str = result.trim();
+        if (
+          (str.startsWith('"') && str.endsWith('"')) ||
+          (str.startsWith("'") && str.endsWith("'"))
+        ) {
+          str = str.slice(1, -1);
+        }
+        result = JSON.parse(str);
+      }
+      return deepParseJSON(result);
+    } catch {
+      return value;
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((v) => deepParseJSON(v));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, deepParseJSON(v)]),
+    );
+  }
+
+  return value;
+}
+
 export class MCPManager {
   private static instance: MCPManager | null = null;
   /** App-level connections initialized at startup */
@@ -864,7 +900,7 @@ export class MCPManager {
     serverName: string;
     toolName: string;
     provider: t.Provider;
-    toolArguments?: Record<string, unknown>;
+    toolArguments?: Record<string, unknown> | string;
     options?: RequestOptions;
     tokenMethods?: TokenMethods;
     customUserVars?: Record<string, string>;
@@ -910,12 +946,27 @@ export class MCPManager {
         );
       }
 
+      let parsedArguments: unknown = toolArguments;
+      if (typeof parsedArguments === 'string') {
+        logger.debug(
+          `${logPrefix}[${toolName}] Raw tool arguments string: ${parsedArguments}`,
+        );
+      } else {
+        logger.debug(`${logPrefix}[${toolName}] Tool arguments:`, parsedArguments);
+      }
+
+      parsedArguments = deepParseJSON(parsedArguments);
+      logger.debug(
+        `${logPrefix}[${toolName}] Parsed tool arguments:`,
+        parsedArguments,
+      );
+
       const result = await connection.client.request(
         {
           method: 'tools/call',
           params: {
             name: toolName,
-            arguments: toolArguments,
+            arguments: parsedArguments,
           },
         },
         CallToolResultSchema,

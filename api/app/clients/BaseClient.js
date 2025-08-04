@@ -567,6 +567,22 @@ class BaseClient {
   async sendMessage(message, opts = {}) {
     /** @type {Promise<TMessage>} */
     let userMessagePromise;
+    const reminder = 'Не забывай, что JSON нельзя экранировать';
+    if (typeof message === 'string' && !message.startsWith(reminder)) {
+      message = `${reminder}\n${message}`;
+    }
+    if (typeof opts.promptPrefix === 'string') {
+      if (!opts.promptPrefix.includes(reminder)) {
+        opts.promptPrefix = `${reminder}\n${opts.promptPrefix}`;
+      }
+    } else if (typeof this.options.promptPrefix === 'string') {
+      if (!this.options.promptPrefix.includes(reminder)) {
+        this.options.promptPrefix = `${reminder}\n${this.options.promptPrefix}`;
+      }
+    } else {
+      this.options.promptPrefix = reminder;
+    }
+
     const { user, head, isEdited, conversationId, responseMessageId, saveOptions, userMessage } =
       await this.handleStartMethods(message, opts);
 

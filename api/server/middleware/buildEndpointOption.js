@@ -75,9 +75,18 @@ async function buildEndpointOption(req, res, next) {
   } 
 
   const reminder = 'Не забывай, что JSON нельзя экранировать';
-  parsedBody.promptPrefix = parsedBody.promptPrefix
-    ? `${reminder}\n${parsedBody.promptPrefix}`
-    : reminder;
+
+  if (typeof req.body.text === 'string' && !req.body.text.startsWith(reminder)) {
+    req.body.text = `${reminder}\n${req.body.text}`;
+  }
+
+  if (parsedBody.promptPrefix) {
+    if (!parsedBody.promptPrefix.includes(reminder)) {
+      parsedBody.promptPrefix = `${reminder}\n${parsedBody.promptPrefix}`;
+    }
+  } else {
+    parsedBody.promptPrefix = reminder;
+  }
   req.body.promptPrefix = parsedBody.promptPrefix;
 
   try {

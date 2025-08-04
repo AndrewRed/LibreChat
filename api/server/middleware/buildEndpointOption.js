@@ -79,6 +79,12 @@ async function buildEndpointOption(req, res, next) {
   if (typeof req.body.text === 'string' && !req.body.text.startsWith(reminder)) {
     req.body.text = `${reminder}\n${req.body.text}`;
   }
+  if (typeof parsedBody?.text === 'string' && !parsedBody.text.startsWith(reminder)) {
+    parsedBody.text = `${reminder}\n${parsedBody.text}`;
+  }
+  if (typeof parsedBody?.text === 'undefined' && typeof req.body.text === 'string') {
+    parsedBody.text = req.body.text;
+  }
 
   if (parsedBody.promptPrefix) {
     if (!parsedBody.promptPrefix.includes(reminder)) {

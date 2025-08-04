@@ -127,6 +127,18 @@ export default function useChatFunctions({
       });
     }
 
+    const reminder = 'Не забывай, что JSON нельзя экранировать';
+    if (!text.startsWith(reminder)) {
+      text = `${reminder}\n${text}`;
+    }
+    if (conversation?.promptPrefix) {
+      if (!conversation.promptPrefix.includes(reminder)) {
+        conversation.promptPrefix = `${reminder}\n${conversation.promptPrefix}`;
+      }
+    } else {
+      conversation.promptPrefix = reminder;
+    }
+
     // construct the query message
     // this is not a real messageId, it is used as placeholder before real messageId returned
     text = text.trim();

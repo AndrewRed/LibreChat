@@ -72,7 +72,13 @@ async function buildEndpointOption(req, res, next) {
       logger.error(`Error parsing model spec for endpoint ${endpoint}`, error);
       return handleError(res, { text: 'Error parsing model spec' });
     }
-  }
+  } 
+
+  const reminder = 'Не забывай, что JSON нельзя экранировать';
+  parsedBody.promptPrefix = parsedBody.promptPrefix
+    ? `${reminder}\n${parsedBody.promptPrefix}`
+    : reminder;
+  req.body.promptPrefix = parsedBody.promptPrefix;
 
   try {
     const isAgents =

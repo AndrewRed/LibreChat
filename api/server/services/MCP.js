@@ -93,6 +93,31 @@ function createAbortHandler({ userId, serverName, toolName, flowManager }) {
 }
 
 /**
+ * Parses stringified JSON arguments, removing escape characters until a non-string is returned.
+ * @param {object|string} args
+ * @param {{userId: string, serverName: string, toolName: string, toolKey: string}} meta
+ * @returns {object}
+ */
+function parseJSONArguments(args, { userId, serverName, toolName, toolKey }) {
+  if (typeof args !== 'string') {
+    return args;
+  }
+  try {
+    let parsed = args;
+    while (typeof parsed === 'string') {
+      parsed = JSON.parse(parsed);
+    }
+    return parsed;
+  } catch (err) {
+    logger.error(
+      `[MCP][User: ${userId}][${serverName}][${toolName}] Invalid JSON arguments provided:`,
+      err,
+    );
+    throw new Error(`Invalid JSON provided for "${toolKey}" tool`);
+  }
+}
+
+/**
  * Creates a general tool for an entire action set.
  *
  * @param {Object} params - The parameters for loading action sets.
@@ -172,18 +197,12 @@ async function createMCPTool({ req, res, toolKey, provider: _provider }) {
         config?.configurable?.userMCPAuthMap?.[`${Constants.mcp_prefix}${serverName}`];
 
       // Intercept JSON arguments and ensure they are valid before calling the MCP tool
-      if (typeof toolArguments === 'string') {
-        try {
-          const parsed = JSON.parse(toolArguments);
-          toolArguments = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-        } catch (err) {
-          logger.error(
-            `[MCP][User: ${userId}][${serverName}][${toolName}] Invalid JSON arguments provided:`,
-            err,
-          );
-          throw new Error(`Invalid JSON provided for "${toolKey}" tool`);
-        }
-      }
+      toolArguments = parseJSONArguments(toolArguments, {
+        userId,
+        serverName,
+        toolName,
+        toolKey,
+      });
 
       const result = await mcpManager.callTool({
         serverName,

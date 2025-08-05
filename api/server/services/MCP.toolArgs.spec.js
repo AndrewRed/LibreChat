@@ -101,5 +101,39 @@ describe('createMCPTool argument parsing', () => {
     expect(callTool).toHaveBeenCalled();
     expect(callTool.mock.calls[0][0].toolArguments).toEqual({ foo: 'bar' });
   });
+
+  it('handles nested stringified JSON arguments', async () => {
+    const req = { user: { id: 'user-1' } };
+    const res = {};
+    const tool = await createMCPTool({
+      req,
+      res,
+      toolKey: 'tool::server',
+      provider: 'openai',
+    });
+
+    const config = { metadata: { thread_id: 't1', run_id: 'r1' } };
+    await tool._call('"{\\"foo\\":\\"bar\\"}"', config);
+
+    const callTool = getMCPManager().callTool;
+    expect(callTool).toHaveBeenCalled();
+    expect(callTool.mock.calls[0][0].toolArguments).toEqual({ foo: 'bar' });
+  });
+
+  it('throws an error when JSON arguments are invalid', async () => {
+    const req = { user: { id: 'user-1' } };
+    const res = {};
+    const tool = await createMCPTool({
+      req,
+      res,
+      toolKey: 'tool::server',
+      provider: 'openai',
+    });
+
+    const config = { metadata: { thread_id: 't1', run_id: 'r1' } };
+    await expect(tool._call('{"foo":"bar"', config)).rejects.toThrow(
+      'Invalid JSON provided for "tool::server" tool',
+    );
+  });
 });
 

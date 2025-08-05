@@ -171,6 +171,20 @@ async function createMCPTool({ req, res, toolKey, provider: _provider }) {
       const customUserVars =
         config?.configurable?.userMCPAuthMap?.[`${Constants.mcp_prefix}${serverName}`];
 
+      // Intercept JSON arguments and ensure they are valid before calling the MCP tool
+      if (typeof toolArguments === 'string') {
+        try {
+          const parsed = JSON.parse(toolArguments);
+          toolArguments = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+        } catch (err) {
+          logger.error(
+            `[MCP][User: ${userId}][${serverName}][${toolName}] Invalid JSON arguments provided:`,
+            err,
+          );
+          throw new Error(`Invalid JSON provided for "${toolKey}" tool`);
+        }
+      }
+
       const result = await mcpManager.callTool({
         serverName,
         toolName,
